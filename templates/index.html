@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pseudocode interpreter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://unpkg.com/monaco-editor@0.52.2/min/vs/loader.js"></script>
+</head>
+
+<body>
+    <div id="menu-bar">
+        <div class="menu">
+            <button class="menu-button">File</button>
+            <div class="dropdown">
+                <button id="new-pseudo-button">New Pseudocode File</button>
+                <button id="new-text-button">New Text File</button>
+                <button id="load-button">Open...</button>
+                <hr>
+                <button id="save-button">Save</button>
+                <button id="save-as-button">Save As...</button>
+            </div>
+        </div>
+        <div class="menu">
+            <button class="menu-button">Edit</button>
+            <div class="dropdown">
+                <button id="undo-button">Undo</button>
+                <button id="redo-button">Redo</button>
+                <hr>
+                <button id="cut-button">Cut</button>
+                <button id="copy-button">Copy</button>
+                <button id="paste-button">Paste</button>
+                <hr>
+                <button id="find-button">Find</button>
+            </div>
+        </div>
+
+        <button id="run-button" class="menu-button">
+            Run ▶
+        </button>
+
+        <div class="menu">
+            <button class="menu-button">Help</button>
+            <div class="dropdown">
+                <button id="docs-button">Documentation</button>
+                <button id="about-button">About</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab-bar">
+        <button id="new-tab-button">+</button>
+    </div>
+
+    <div id="container">
+        <div id="editor"></div>
+        <input
+            type="file"
+            id="file-input"
+            accept=".pseudo"
+            style="display: none;">
+        <div id="terminal">
+            <div id="terminal-output"></div>
+            <div id="terminal-input-line">
+                <span>&gt;</span>
+                <input
+                    id="terminal-input"
+                    type="text"
+                    disabled
+                    autocomplete="off"
+                    spellcheck="false">
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
