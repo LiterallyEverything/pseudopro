@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pseudocode Interpreter</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        html, body {
+            margin: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000000;
+        }
+        #splash {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000000;
+            animation: splashExit 1s ease-in-out 2s forwards;
+        }
+        #logo {
+            width: 350px;
+            height: 350px;
+            object-fit: contain;
+            animation: logoAnimation 2.5s ease-in-out forwards;
+        }
+        @keyframes logoAnimation {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            30% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            70% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.05);
+            }
+        }
+        @keyframes splashExit {
+            0% {
+                transform: translateX(0);
+            }
+
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="splash">
+        <img id="logo" src="{{ url_for('static', filename='logo.png') }}">
+    </div>
+    <script>
+        setTimeout(() => {
+            window.location.href = "/app";
+        }, 2500);
+    </script>
+</body>
+</html>

@@ -3,18 +3,33 @@ from inter.pci import interpreter, InterpreterError
 from queue import Queue
 from threading import Thread
 import os
+import sys
 import traceback
+
+if getattr(sys, "frozen", False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 app = Flask(__name__)
 
 input_queue = Queue()
 output_queue = Queue()
-
 waiting_for_input = False
 running = False
 
-SAVE_FOLDER = "saved"
+SAVE_FOLDER = os.path.join(BASE_DIR, "saved")
 os.makedirs(SAVE_FOLDER, exist_ok=True)
+
+for filename in os.listdir(SAVE_FOLDER):
+    path = os.path.join(SAVE_FOLDER, filename)
+    if os.path.isfile(path):
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+open_files = set()
 
 def run_interpreter(inter, code):
     global running
@@ -42,6 +57,10 @@ def input_callback():
 
 @app.route("/")
 def home():
+    return render_template("splash.html")
+
+@app.route("/app")
+def application():
     return render_template("index.html")
 
 @app.post("/run")
@@ -78,14 +97,13 @@ def output():
 
 @app.post("/input")
 def receive_input():
-    value = request.json["input"]
-    input_queue.put(value)
+    input_queue.put(request.json["input"])
     return {"success": True}
 
 @app.get("/waiting")
 def waiting():
     return {
-    "waiting": waiting_for_input
+        "waiting": waiting_for_input
     }
 
 @app.post("/save")
@@ -93,13 +111,82 @@ def save():
     data = request.json
     filename = os.path.basename(data["filename"])
     code = data["code"]
-    with open(
-        os.path.join(SAVE_FOLDER, filename),
-        "w",
-        encoding="utf-8"
-    ) as f:
+    if filename not in open_files:
+        return {
+            "success": False,
+            "message": "File is not open."
+        }
+    path = os.path.join(SAVE_FOLDER, filename)
+    with open(path, "w", encoding="utf-8") as f:
         f.write(code)
     return {"success": True}
 
+@app.post("/open")
+def open_file():
+    filename = os.path.basename(request.json["filename"])
+    if filename in open_files:
+        return {
+            "success": False,
+            "message": "A file with that name is already open."
+        }
+    path = os.path.join(SAVE_FOLDER, filename)
+    if not os.path.exists(path):
+        return {
+            "success": False,
+            "message": "File does not exist."
+        }
+    with open(path, "r", encoding="utf-8") as f:
+        code = f.read()
+    open_files.add(filename)
+    return {
+        "success": True,
+        "code": code
+    }
+
+@app.post("/new")
+def new_file():
+    filename = os.path.basename(request.json["filename"])
+    if filename in open_files:
+        return {
+            "success": False,
+            "message": "A file with that name is already open."
+        }
+    path = os.path.join(SAVE_FOLDER, filename)
+    if os.path.exists(path):
+        return {
+            "success": False,
+            "message": "File already exists."
+        }
+    open(path, "w", encoding="utf-8").close()
+    open_files.add(filename)
+    return {"success": True}
+
+@app.post("/close")
+def close_file():
+    filename = os.path.basename(request.json["filename"])
+    if filename not in open_files:
+        return {
+            "success": False,
+            "message": "File is not open."
+        }
+    open_files.remove(filename)
+    path = os.path.join(SAVE_FOLDER, filename)
+    if os.path.exists(path):
+        os.remove(path)
+    return {"success": True}
+
+@app.get("/files")
+def list_files():
+    files = []
+    for filename in os.listdir(SAVE_FOLDER):
+        path = os.path.join(SAVE_FOLDER, filename)
+        if os.path.isfile(path):
+            files.append(filename)
+    return jsonify(files)
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(
+        host="127.0.0.1",
+        port=5000,
+        debug=False
+    )

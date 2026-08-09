@@ -140,7 +140,7 @@ require(["vs/editor/editor.main"], function () {
         () => runProgram()
     );
 
-    createFile("program.pseudo", "pseudo");
+    createFile("untitled1.pseudo", "pseudo");
     editor.onDidChangeModelContent(() => {
         if (!currentFile)
             return;
@@ -252,8 +252,11 @@ async function updateTerminal() {
 
 document.getElementById("save-button").addEventListener("click", saveFile);
 async function saveFile() {
+    if (!currentFile)
+        return;
+    let filename = currentFile.name;
     if (!currentFile.saved) {
-        let filename = prompt(
+        filename = prompt(
             "Enter filename:",
             currentFile.name
         );
@@ -264,10 +267,15 @@ async function saveFile() {
                 ? ".pseudo"
                 : ".txt";
         }
-        currentFile.name = filename;
-        currentFile.saved = true;
-        refreshTab(currentFile);
-        updateTitle();
+    }
+    if (
+        files.some(f =>
+            f !== currentFile &&
+            f.name === filename
+        )
+    ) {
+        alert("A file with that name is already open.");
+        return;
     }
     const response = await fetch("/save", {
         method: "POST",
@@ -275,16 +283,20 @@ async function saveFile() {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            filename: currentFile.name,
+            filename: filename,
             code: currentFile.model.getValue()
         })
     });
     const result = await response.json();
-    if (result.success) {
-        currentFile.modified = false;
-        refreshTab(currentFile);
-        updateTitle();
+    if (!result.success) {
+        alert(result.message);
+        return;
     }
+    currentFile.name = filename;
+    currentFile.saved = true;
+    currentFile.modified = false;
+    refreshTab(currentFile);
+    updateTitle();
 }
 
 document.getElementById("load-button")
@@ -295,7 +307,7 @@ document.getElementById("load-button")
 document.getElementById("file-input")
     .addEventListener("change", openFile);
 
-function openFile(event) {
+async function openFile(event) {
     const file = event.target.files[0];
     if (!file)
         return;
@@ -307,53 +319,92 @@ function openFile(event) {
         event.target.value = "";
         return;
     }
-    const existing = files.find(f => f.name === file.name);
-    if (existing) {
-        switchToFile(existing);
+    if (files.some(f => f.name === file.name)) {
+        alert("A file with that name is already open.");
         event.target.value = "";
         return;
     }
-    const reader = new FileReader();
-    reader.onload = function(e) {
+    try {
+        const response = await fetch("/open", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                filename: file.name
+            })
+        });
+        const result = await response.json();
+        if (!result.success) {
+            alert(result.message);
+            event.target.value = "";
+            return;
+        }
         const type =
             file.name.endsWith(".txt")
                 ? "text"
                 : "pseudo";
-
         const language =
             type === "text"
                 ? "plaintext"
                 : "pseudocode";
-
         const fileObj = {
             name: file.name,
             type: type,
             saved: true,
             modified: false,
             model: monaco.editor.createModel(
-                e.target.result,
+                result.code,
                 language
             )
         };
         files.push(fileObj);
         addTab(fileObj);
         switchToFile(fileObj);
-    };
-    reader.readAsText(file);
+    } catch (err) {
+        alert("Failed to open file.");
+    }
     event.target.value = "";
 }
 
-function createFile(name, type) {
+async function loadSavedFiles() {
+    const response = await fetch("/files");
+    const filenames = await response.json();
+    console.log(filenames);
+}
+
+async function createFile(name, type) {
     const language =
         type === "pseudo"
             ? "pseudocode"
             : "plaintext";
+    if (files.some(f => f.name === name)) {
+        alert("A file with that name is already open.");
+        return;
+    }
+    const response = await fetch("/new", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            filename: name
+        })
+    });
+    const result = await response.json();
+    if (!result.success) {
+        alert(result.message);
+        return;
+    }
     const file = {
         name: name,
         type: type,
-        saved: false,
+        saved: true,
         modified: false,
-        model: monaco.editor.createModel("", language)
+        model: monaco.editor.createModel(
+            "",
+            language
+        )
     };
     files.push(file);
     addTab(file);
@@ -361,20 +412,20 @@ function createFile(name, type) {
 }
 
 function newPseudoFile() {
-    createFile(
-        "untitled" + (files.length + 1) + ".pseudo",
-        "pseudo"
-    );
+    let i = 1;
+    while (files.some(f => f.name === `untitled${i}.pseudo`))
+        i++;
+    createFile(`untitled${i}.pseudo`, "pseudo");
 }
 
 function newTextFile() {
-    createFile(
-        "untitled" + (files.length + 1) + ".txt",
-        "text"
-    );
+    let i = 1;
+    while (files.some(f => f.name === `untitled${i}.txt`))
+        i++;
+    createFile(`untitled${i}.txt`, "text");
 }
 
-function saveFileAs() {
+async function saveFileAs() {
     if (!currentFile)
         return;
     let filename = prompt(
@@ -388,18 +439,35 @@ function saveFileAs() {
             ? ".pseudo"
             : ".txt";
     }
-    const blob = new Blob(
-        [currentFile.model.getValue()],
-        { type: "text/plain" }
-    );
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    if (
+        files.some(f =>
+            f !== currentFile &&
+            f.name === filename
+        )
+    ) {
+        alert("A file with that name is already open.");
+        return;
+    }
+    const response = await fetch("/save", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            filename: filename,
+            code: currentFile.model.getValue()
+        })
+    });
+    const result = await response.json();
+    if (!result.success) {
+        alert(result.message);
+        return;
+    }
+    currentFile.name = filename;
+    currentFile.saved = true;
+    currentFile.modified = false;
+    refreshTab(currentFile);
+    updateTitle();
 }
 
 function switchToFile(file) {
@@ -443,6 +511,15 @@ function closeFile(file) {
         if (!confirm(`Discard changes to ${file.name}?`))
             return;
     }
+    fetch("/close", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            filename: file.name
+        })
+    });
     file.model.dispose();
     file.tab.remove();
     const index = files.indexOf(file);
