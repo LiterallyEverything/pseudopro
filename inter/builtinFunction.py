@@ -2,6 +2,45 @@ import inter.pci as pci
 import random
 from datetime import datetime, date
 
+class MOD:
+    def __init__(self):
+        self.identifier = "MOD"
+        self.type = "INTEGER"
+        self.parameters = {"x": "INTEGER", "y": "INTEGER"}
+        self.lines = []
+        self.initialpos = 0
+
+    def returnType(self):
+        return self.type
+
+    def returnValue(self, args, lineNo, line):
+        self.inter = pci.funcInterpreter(lineNo, line, self.identifier)
+        x = args[0]
+        y = args[1]
+        if y == 0:
+            self.inter.err.message("Cannot divide by zero")
+        return x % y
+
+
+class DIV:
+    def __init__(self):
+        self.identifier = "DIV"
+        self.type = "INTEGER"
+        self.parameters = {"x": "INTEGER", "y": "INTEGER"}
+        self.lines = []
+        self.initialpos = 0
+
+    def returnType(self):
+        return self.type
+
+    def returnValue(self, args, lineNo, line):
+        self.inter = pci.funcInterpreter(lineNo, line, self.identifier)
+        x = args[0]
+        y = args[1]
+        if y == 0:
+            self.inter.err.message("Cannot divide by zero")
+        return x // y
+
 class LEFT:
     def __init__(self):
         self.identifier = "LEFT"
@@ -426,5 +465,7 @@ builtIns = {"LEFT":LEFT(),
             "DAYINDEX": DAYINDEX(),
             "SETDATE": SETDATE(),
             "TODAY": TODAY(),
-            "EOF":EOF()
+            "EOF":EOF(),
+            "MOD": MOD(),
+            "DIV": DIV()
             }

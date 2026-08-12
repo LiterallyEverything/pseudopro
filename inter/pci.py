@@ -15,7 +15,8 @@ operators = [
     "*",
     "/",
     "MOD",
-    "DIV"
+    "DIV",
+    "^"
 ]
 logicOperators = [
     "AND",
@@ -666,7 +667,14 @@ class interpreter:
         if identifier in (self.constants).keys():
             self.err.invaSyn(lineNo, line, (line.find(identifier)+len(identifier))//2, None, "A constant is immutable")
         elif type != valueType:
-            self.err.typeErr(lineNo, line, (line.find(str(value))+len(str(value)))//2, value, type)
+            if not (type == "REAL" and valueType == "INTEGER"):
+                self.err.typeErr(
+                    lineNo,
+                    line,
+                    (line.find(str(value)) + len(str(value))) // 2,
+                    value,
+                    type
+                )
         elif identifier in (self.variables).keys():
             self.variables[identifier].value = value
         elif (self.isArray(identifier, lineNo, line))[0] == True:
@@ -852,7 +860,14 @@ class interpreter:
             if left in (self.constants).keys():
                 self.err.invaSyn(lineNo, line, (line.find(left)+len(left))//2, None, "A constant is immutable")
             elif leftType != rightType:
-                self.err.typeErr(lineNo, line, (line.find(str(right))+len(str(right)))//2, right, leftType)
+                if not (leftType == "REAL" and rightType == "INTEGER"):
+                    self.err.typeErr(
+                        lineNo,
+                        line,
+                        (line.find(str(right)) + len(str(right))) // 2,
+                        right,
+                        leftType
+                    )
             elif left in (self.variables).keys():
                 self.variables[left].value = right
             elif (self.isArray(left, lineNo, line))[0] == True:
@@ -2152,7 +2167,8 @@ class interpreter:
             '*': 2,
             '/': 2,
             'MOD': 3,
-            'DIV': 3
+            'DIV': 3,
+            '^' : 4
         }
         # Stack to hold operators and values
         operatorStack = []
@@ -2184,8 +2200,10 @@ class interpreter:
                 if operand2 == 0:
                     self.err.runTime(lineNo, line, -1, None, "Zero division error")
                 valueStack.append(operand1 // operand2)
+            elif operator == '^':
+                valueStack.append(operand1 ** operand2)
 
-        splitters = r'(?<![a-zA-Z_])MOD(?![a-zA-Z_])|(?<![a-zA-Z_])DIV(?![a-zA-Z_])|\+|-|\*|/'
+        splitters = r'(?<![a-zA-Z_])MOD(?![a-zA-Z_])|(?<![a-zA-Z_])DIV(?![a-zA-Z_])|\+|-|\*|/|\^'
         exprList = self.splitBy(splitters, expressionWOL, expression)
 
         if (exprList[0] in ["+", "*", "/", "MOD", "DIV"]) or (exprList[-1] in precedence.keys()):

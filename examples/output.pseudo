@@ -1,0 +1,5 @@
+DECLARE name : STRING
+name <- "pseudocode"
+
+OUTPUT "Hello World"
+OUTPUT "Hope you like ", name, " :)"

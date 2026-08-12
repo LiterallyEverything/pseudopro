@@ -50,6 +50,18 @@ require(["vs/editor/editor.main"], function () {
         ],
         colors: {}
     });
+    monaco.editor.defineTheme("pseudocode-light", {
+        base: "vs",
+        inherit: true,
+        rules: [
+            { token: "keyword", foreground: "9c36b5" },
+            { token: "comment", foreground: "d35400" },
+            { token: "string", foreground: "267a3d" },
+            { token: "number", foreground: "a05a00" },
+            { token: "number.float", foreground: "a05a00" }
+        ],
+        colors: {}
+    });
     monaco.languages.registerCompletionItemProvider("pseudocode", {
         provideCompletionItems: function(model, position) {
             const keywords = ["OF", "AND", "APPEND", "ARRAY", "BOOLEAN", "BYREF", "BYVAL", "CALL", "CASE", "CHAR", "CLASS", "CLOSEFILE", "CONSTANT", "DATE", "DECLARE", "DIV", "ELSE", "ENDCASE", "ENDCLASS", "ENDFUNCTION", "ENDIF", "ENDPROCEDURE", "ENDTYPE", "ENDWHILE", "EOF", "FALSE", "FOR", "TO", "FUNCTION", "GETRECORD", "IF", "INHERITS", "INPUT", "INT", "INTEGER", "LCASE", "LENGTH", "MID", "MOD", "NEXT", "NEW", "NOT", "OPENFILE", "OR", "OTHERWISE", "OUTPUT", "PROCEDURE", "PRIVATE", "PUBLIC", "PUTRECORD", "RAND", "RANDOM", "READ", "READFILE", "REAL", "REPEAT", "RETURN", "RETURNS", "RIGHT", "SEEK", "STEP", "STRING", "SUPER", "THEN", "TRUE", "TYPE", "UCASE", "UNTIL", "WHILE", "WRITE", "WRITEFILE"]
@@ -254,6 +266,9 @@ document.getElementById("save-button").addEventListener("click", saveFile);
 async function saveFile() {
     if (!currentFile)
         return;
+    if (currentFile.readOnly) {
+        return;
+    }
     let filename = currentFile.name;
     if (!currentFile.saved) {
         filename = prompt(
@@ -353,6 +368,7 @@ async function openFile(event) {
             type: type,
             saved: true,
             modified: false,
+            readOnly: false,
             model: monaco.editor.createModel(
                 result.code,
                 language
@@ -401,6 +417,7 @@ async function createFile(name, type) {
         type: type,
         saved: true,
         modified: false,
+        readOnly: false,
         model: monaco.editor.createModel(
             "",
             language
@@ -428,6 +445,9 @@ function newTextFile() {
 async function saveFileAs() {
     if (!currentFile)
         return;
+    if (currentFile.readOnly) {
+        return;
+    }
     let filename = prompt(
         "Enter filename:",
         currentFile.name
@@ -473,6 +493,9 @@ async function saveFileAs() {
 function switchToFile(file) {
     currentFile = file;
     editor.setModel(file.model);
+    editor.updateOptions({
+        readOnly: file.readOnly === true
+    });
     for (const f of files)
         f.tab.classList.remove("active");
     file.tab.classList.add("active");
@@ -533,11 +556,63 @@ function closeFile(file) {
     switchToFile(next);
 }
 
+function openAboutFile() {
+    const existing = files.find(f => f.name === "About.txt");
+    if (existing) {
+        switchToFile(existing);
+        return;
+    }
+    const aboutContent = `PseudoPro
+=============
+
+A pseudocode IDE and interpreter designed for writing,
+running, and experimenting with pseudocode programs
+aligned with the A Level Computer Science syllabus for CAIE.
+
+Version: 1.1.0
+
+Features
+--------
+• Pseudocode interpreter
+• Pseudocode syntax highlighting
+• File management
+• Built-in examples
+• Integrated terminal
+
+
+Developed by Mustafa Adil.
+
+Thank you for using PseudoPro!`;
+    const file = {
+        name: "About.txt",
+        type: "text",
+        saved: true,
+        modified: false,
+        readOnly: true,
+        model: monaco.editor.createModel(
+            aboutContent,
+            "plaintext"
+        )
+    };
+    files.push(file);
+    addTab(file);
+    switchToFile(file);
+}
+
 document.getElementById("new-pseudo-button").onclick = newPseudoFile;
 document.getElementById("new-text-button").onclick = newTextFile;
 
 document.getElementById("save-as-button").onclick = saveFileAs;
 
+document.getElementById("exit-button").onclick = async () => {
+    if (files.some(file => file.modified)) {
+        if (!confirm("You have unsaved changes. Exit anyway?"))
+            return;
+    }
+    await fetch("/exit", {
+        method: "POST"
+    });
+};
 document.getElementById("undo-button").onclick = () =>
     editor.trigger("menu", "undo");
 
@@ -572,13 +647,113 @@ document.getElementById("paste-button").onclick = async () => {
 document.getElementById("find-button").onclick = () =>
     editor.getAction("actions.find").run();
 
-document.getElementById("about-button").onclick = () =>
-    alert("pseudocode interpreter\nversion 1.0");
+document.getElementById("about-button").onclick = openAboutFile;
 
 document.getElementById("new-tab-button").onclick = newPseudoFile;
 
+document.getElementById("docs-button").onclick = () => {
+    window.open("/documentation", "_blank");
+};
+
+const lightModeButton = document.getElementById("light-mode-button");
+const darkModeButton = document.getElementById("dark-mode-button");
+
+function setEditorTheme(theme) {
+    if (theme === "light") {
+        monaco.editor.setTheme("pseudocode-light");
+    } else {
+        monaco.editor.setTheme("pseudocode-dark");
+    }
+}
+
+function setTheme(theme) {
+    if (theme === "light") {
+        document.body.classList.add("light-mode");
+        setEditorTheme("light");
+        localStorage.setItem("theme", "light");
+    } else {
+        document.body.classList.remove("light-mode");
+        setEditorTheme("dark");
+        localStorage.setItem("theme", "dark");
+    }
+}
+
+lightModeButton.addEventListener("click", () => {
+    setTheme("light");
+});
+
+darkModeButton.addEventListener("click", () => {
+    setTheme("dark");
+});
+
+async function loadExamplesMenu() {
+    const menu = document.getElementById("examples-menu");
+    try {
+        const response = await fetch("/examples");
+        const examples = await response.json();
+        menu.innerHTML = "";
+        if (examples.length === 0) {
+            const button = document.createElement("button");
+            button.textContent = "No examples found";
+            button.disabled = true;
+            menu.appendChild(button);
+            return;
+        }
+        for (const filename of examples) {
+            const button = document.createElement("button");
+            button.textContent = filename;
+            button.addEventListener("click", () => {
+                loadExample(filename);
+            });
+            menu.appendChild(button);
+        }
+    } catch (error) {
+        menu.innerHTML = "";
+        const button = document.createElement("button");
+        button.textContent = "Failed to load examples";
+        button.disabled = true;
+        menu.appendChild(button);
+    }
+}
+
+async function loadExample(filename) {
+    try {
+        const response = await fetch(
+            "/examples/" + encodeURIComponent(filename)
+        );
+        const result = await response.json();
+        if (!result.success) {
+            alert(result.message);
+            return;
+        }
+        if (files.some(f => f.name === filename)) {
+            switchToFile(
+                files.find(f => f.name === filename)
+            );
+            return;
+        }
+        const file = {
+            name: filename,
+            type: "pseudo",
+            saved: true,
+            modified: false,
+            readOnly: false,
+            model: monaco.editor.createModel(
+                result.code,
+                "pseudocode"
+            )
+        };
+        files.push(file);
+        addTab(file);
+        switchToFile(file);
+    } catch (error) {
+        alert("Failed to load example.");
+    }
+}
+
 setInterval(updateInputState, 100);
 setInterval(updateTerminal, 100);
+loadExamplesMenu();
 
 window.addEventListener("beforeunload", e => {
     if (!files.some(file => file.modified))

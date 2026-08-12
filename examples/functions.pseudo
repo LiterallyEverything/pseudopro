@@ -1,0 +1,13 @@
+FUNCTION Square(num : INTEGER) RETURNS INTEGER
+    RETURN num * num
+ENDFUNCTION
+
+DECLARE count : INTEGER
+count <- 1
+
+WHILE count <= 5
+    OUTPUT count, " squared is ", Square(count)
+    count <- count + 1
+ENDWHILE
+
+OUTPUT "Done!"

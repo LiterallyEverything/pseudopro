@@ -1,0 +1,6 @@
+DECLARE pw : STRING
+REPEAT
+    OUTPUT "Please enter a password of at least 8 characters:"
+    INPUT pw
+UNTIL LENGTH(pw) >= 8
+OUTPUT "Password set!"

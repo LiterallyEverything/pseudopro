@@ -1,0 +1,19 @@
+DECLARE c : CHAR
+c <- '3'
+CASE OF c
+    'A' TO 'Z': OUTPUT c, " is an uppercase letter"
+    'a' TO 'z': OUTPUT c, " is a lowercase letter"
+    '0' TO '9': OUTPUT c, " is a number"
+    OTHERWISE: OUTPUT "Non-alphanumeric character entered"
+ENDCASE
+
+DECLARE age : INTEGER
+age <- 101
+CASE OF age
+    0 TO 1: OUTPUT "You are a baby 👶"
+    2 TO 12: OUTPUT "You are a child 🧒"
+    13 TO 19: OUTPUT "You are a teenager 🧑"
+    20 TO 99: OUTPUT "You are an adult 🧑"
+    100: OUTPUT "You are a centernarian 💯"
+    OTHERWISE: OUTPUT "Over 100. Incredible! 🍾"
+ENDCASE

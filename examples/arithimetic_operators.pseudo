@@ -1,0 +1,10 @@
+DECLARE a, b : INTEGER
+a <- 6
+b <- 4
+
+OUTPUT a + b
+OUTPUT a - b
+OUTPUT a * b
+OUTPUT a / b
+OUTPUT a DIV b
+OUTPUT a MOD b

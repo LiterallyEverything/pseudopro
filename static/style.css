@@ -237,3 +237,196 @@ body {
 #new-tab-button:hover {
     background: #37373d;
 }
+
+.submenu {
+    position: relative;
+}
+
+.submenu-button {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: transparent;
+    color: #ffffff;
+    border: none;
+    text-align: left;
+    font-family: Consolas, monospace;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.submenu-button:hover {
+    background: #555555;
+}
+
+.submenu-content {
+    display: none;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    min-width: 200px;
+    background: #111111;
+    border: 1px solid #444444;
+    z-index: 1001;
+}
+
+.submenu:hover .submenu-content {
+    display: block;
+}
+
+.submenu-content button {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    background: transparent;
+    color: #ffffff;
+    border: none;
+    text-align: left;
+    font-family: Consolas, monospace;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.submenu-content button:hover {
+    background: #555555;
+}
+
+.submenu-content button:active {
+    background: #666666;
+}
+
+
+/* light mode */
+
+body.light-mode {
+    background: #ffffff;
+    color: #000000;
+}
+
+body.light-mode #menu-bar {
+    background: #f3f3f3;
+    border-bottom-color: #cccccc;
+}
+
+body.light-mode .menu-button,
+body.light-mode #run-button {
+    color: #000000;
+}
+
+body.light-mode .menu-button:hover,
+body.light-mode #run-button:hover {
+    background: #dddddd;
+}
+
+body.light-mode .menu-button:active,
+body.light-mode #run-button:active {
+    background: #cccccc;
+}
+
+body.light-mode .dropdown {
+    background: #f3f3f3;
+    border-color: #cccccc;
+}
+
+body.light-mode .dropdown button {
+    color: #000000;
+}
+
+body.light-mode .dropdown button:hover {
+    background: #dddddd;
+}
+
+body.light-mode .dropdown button:active {
+    background: #cccccc;
+}
+
+body.light-mode .dropdown hr {
+    border-top-color: #cccccc;
+}
+
+body.light-mode .submenu-button {
+    color: #000000;
+}
+
+body.light-mode .submenu-button:hover {
+    background: #dddddd;
+}
+
+body.light-mode .submenu-content {
+    background: #f3f3f3;
+    border-color: #cccccc;
+}
+
+body.light-mode .submenu-content button {
+    color: #000000;
+}
+
+body.light-mode .submenu-content button:hover {
+    background: #dddddd;
+}
+
+body.light-mode #tab-bar {
+    background: #eeeeee;
+    border-bottom-color: #cccccc;
+}
+
+body.light-mode .tab {
+    background: #e2e2e2;
+    color: #555555;
+    border-right-color: #cccccc;
+}
+
+body.light-mode .tab:hover {
+    background: #d5d5d5;
+}
+
+body.light-mode .tab.active {
+    background: #ffffff;
+    color: #000000;
+}
+
+body.light-mode .close-tab {
+    color: #666666;
+}
+
+body.light-mode .close-tab:hover {
+    background: #cccccc;
+    color: #000000;
+}
+
+body.light-mode #new-tab-button {
+    background: #eeeeee;
+    color: #000000;
+}
+
+body.light-mode #new-tab-button:hover {
+    background: #d5d5d5;
+}
+
+body.light-mode #editor {
+    border-color: #cccccc;
+}
+
+body.light-mode #terminal {
+    background: #f5f5f5;
+    border-color: #cccccc;
+}
+
+body.light-mode #terminal-output {
+    background: #f5f5f5;
+    color: #000000;
+}
+
+body.light-mode #terminal-input-line {
+    background: #eeeeee;
+    border-top-color: #cccccc;
+}
+
+body.light-mode #terminal-input-line span {
+    color: #000000;
+}
+
+body.light-mode #terminal-input {
+    background: #eeeeee;
+    color: #000000;
+}

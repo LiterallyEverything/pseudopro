@@ -1,0 +1,7 @@
+DECLARE count : INTEGER
+count <- 1
+WHILE count <= 10
+    OUTPUT count
+    count <- count + 1
+ENDWHILE
+OUTPUT "Finished!"

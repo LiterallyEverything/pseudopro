@@ -1,0 +1,27 @@
+DECLARE score : INTEGER
+score <- 85
+IF score > 80 THEN
+    OUTPUT "A* 🎉"
+ELSE 
+    IF score > 70 THEN
+        OUTPUT "A"
+    ELSE 
+        IF score > 60 THEN
+            OUTPUT "B"
+        ELSE 
+            IF score > 50 THEN
+                OUTPUT "C"
+            ELSE 
+                IF score > 40 THEN
+                    OUTPUT "D"
+                ELSE
+                    IF score > 30 THEN
+                        OUTPUT "E"
+                    ELSE
+                        OUTPUT "Unlucky, you failed :("
+                    ENDIF
+                ENDIF
+            ENDIF
+        ENDIF
+    ENDIF
+ENDIF

@@ -1,0 +1,19 @@
+DECLARE score : INTEGER
+score <- 80
+OUTPUT score
+
+DECLARE pi : REAL
+pi <- 3.14
+OUTPUT pi
+
+DECLARE player1Symbol : CHAR
+player1Symbol <- 'X'
+OUTPUT player1Symbol
+
+DECLARE name : STRING
+name <- "Alex"
+OUTPUT name
+
+DECLARE likesThisSite : BOOLEAN
+likesThisSite <- TRUE
+OUTPUT likesThisSite

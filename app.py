@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from inter.pci import interpreter, InterpreterError
 from queue import Queue
 from threading import Thread
@@ -19,6 +19,7 @@ waiting_for_input = False
 running = False
 
 SAVE_FOLDER = os.path.join(BASE_DIR, "saved")
+EXAMPLES_FOLDER = os.path.join(BASE_DIR, "examples")
 os.makedirs(SAVE_FOLDER, exist_ok=True)
 
 for filename in os.listdir(SAVE_FOLDER):
@@ -183,6 +184,51 @@ def list_files():
         if os.path.isfile(path):
             files.append(filename)
     return jsonify(files)
+
+@app.get("/examples")
+def list_examples():
+    examples = []
+    if not os.path.exists(EXAMPLES_FOLDER):
+        return jsonify(examples)
+    for filename in os.listdir(EXAMPLES_FOLDER):
+        if filename.endswith(".pseudo"):
+            examples.append(filename)
+    examples.sort()
+    return jsonify(examples)
+
+@app.get("/examples/<filename>")
+def get_example(filename):
+    filename = os.path.basename(filename)
+    if not filename.endswith(".pseudo"):
+        return {
+            "success": False,
+            "message": "Invalid example file."
+        }
+    path = os.path.join(EXAMPLES_FOLDER, filename)
+    if not os.path.exists(path):
+        return {
+            "success": False,
+            "message": "Example file does not exist."
+        }
+    with open(path, "r", encoding="utf-8") as f:
+        code = f.read()
+    return {
+        "success": True,
+        "code": code
+    }
+
+@app.post("/exit")
+def exit_app():
+    def shutdown():
+        import time
+        time.sleep(0.2)
+        os._exit(0)
+    Thread(target=shutdown, daemon=True).start()
+    return {"success": True}
+
+@app.route("/documentation")
+def documentation():
+    return send_from_directory(BASE_DIR, "documentation.pdf")
 
 if __name__ == "__main__":
     app.run(

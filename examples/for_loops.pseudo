@@ -1,0 +1,24 @@
+DECLARE n : INTEGER
+
+OUTPUT "Example 1 - Squares"
+FOR n <- 1 TO 5
+    OUTPUT n * n
+NEXT n
+
+OUTPUT "Example 2 - Custom STEPqw"
+FOR n <- 0 TO 1000 STEP 100
+    OUTPUT n
+NEXT n
+
+OUTPUT "Example 3 - Counting Down"
+FOR n <- 10 TO 1 STEP -1
+    OUTPUT n
+NEXT n
+
+OUTPUT "Example 4 - Variable STEP"
+DECLARE stepAmount : INTEGER
+stepAmount <- 1
+FOR n <- 1 TO 100 STEP stepAmount
+    OUTPUT n
+    stepAmount <- stepAmount + 1
+NEXT n
