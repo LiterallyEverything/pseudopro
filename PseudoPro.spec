@@ -1,6 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-
 a = Analysis(
     ['launcher.py'],
     pathex=[],
@@ -10,7 +9,8 @@ a = Analysis(
         ('static', 'static'),
         ('inter', 'inter'),
         ('examples', 'examples'),
-        ('documentation.pdf', '.')],
+        ('documentation.pdf', '.'),
+    ],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -19,6 +19,7 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
+
 pyz = PYZ(a.pure)
 
 exe = EXE(

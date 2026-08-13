@@ -7,11 +7,17 @@ import sys
 import traceback
 
 if getattr(sys, "frozen", False):
+    RESOURCE_DIR = sys._MEIPASS
     BASE_DIR = os.path.dirname(sys.executable)
 else:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    RESOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
+    BASE_DIR = RESOURCE_DIR
 
-app = Flask(__name__)
+app = Flask(
+    __name__,
+    template_folder=os.path.join(RESOURCE_DIR, "templates"),
+    static_folder=os.path.join(RESOURCE_DIR, "static")
+)
 
 input_queue = Queue()
 output_queue = Queue()
@@ -19,7 +25,7 @@ waiting_for_input = False
 running = False
 
 SAVE_FOLDER = os.path.join(BASE_DIR, "saved")
-EXAMPLES_FOLDER = os.path.join(BASE_DIR, "examples")
+EXAMPLES_FOLDER = os.path.join(RESOURCE_DIR, "examples")
 os.makedirs(SAVE_FOLDER, exist_ok=True)
 
 for filename in os.listdir(SAVE_FOLDER):
@@ -112,15 +118,35 @@ def save():
     data = request.json
     filename = os.path.basename(data["filename"])
     code = data["code"]
-    if filename not in open_files:
+    path = os.path.join(SAVE_FOLDER, filename)
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(code)
+        open_files.add(filename)
+        return {"success": True}
+    except Exception as e:
         return {
             "success": False,
-            "message": "File is not open."
+            "message": str(e)
+        }
+
+@app.post("/upload")
+def upload_file():
+    data = request.json
+    filename = os.path.basename(data["filename"])
+    code = data["code"]
+    if filename in open_files:
+        return {
+            "success": False,
+            "message": "File is already open."
         }
     path = os.path.join(SAVE_FOLDER, filename)
     with open(path, "w", encoding="utf-8") as f:
         f.write(code)
-    return {"success": True}
+    open_files.add(filename)
+    return {
+        "success": True
+    }
 
 @app.post("/open")
 def open_file():
@@ -153,27 +179,16 @@ def new_file():
             "message": "A file with that name is already open."
         }
     path = os.path.join(SAVE_FOLDER, filename)
-    if os.path.exists(path):
-        return {
-            "success": False,
-            "message": "File already exists."
-        }
-    open(path, "w", encoding="utf-8").close()
+    if not os.path.exists(path):
+        open(path, "w", encoding="utf-8").close()
     open_files.add(filename)
     return {"success": True}
 
 @app.post("/close")
 def close_file():
     filename = os.path.basename(request.json["filename"])
-    if filename not in open_files:
-        return {
-            "success": False,
-            "message": "File is not open."
-        }
-    open_files.remove(filename)
-    path = os.path.join(SAVE_FOLDER, filename)
-    if os.path.exists(path):
-        os.remove(path)
+    if filename in open_files:
+        open_files.remove(filename)
     return {"success": True}
 
 @app.get("/files")
@@ -193,22 +208,16 @@ def list_examples():
     for filename in os.listdir(EXAMPLES_FOLDER):
         if filename.endswith(".pseudo"):
             examples.append(filename)
-    examples.sort()
     return jsonify(examples)
 
 @app.get("/examples/<filename>")
 def get_example(filename):
     filename = os.path.basename(filename)
-    if not filename.endswith(".pseudo"):
-        return {
-            "success": False,
-            "message": "Invalid example file."
-        }
     path = os.path.join(EXAMPLES_FOLDER, filename)
     if not os.path.exists(path):
         return {
             "success": False,
-            "message": "Example file does not exist."
+            "message": "Example not found."
         }
     with open(path, "r", encoding="utf-8") as f:
         code = f.read()

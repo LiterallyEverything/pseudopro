@@ -1,6 +1,6 @@
 require.config({
     paths: {
-        vs: "https://unpkg.com/monaco-editor@0.52.2/min/vs"
+        vs: "/static/monaco/min/vs"
     }
 });
 
@@ -339,22 +339,9 @@ async function openFile(event) {
         event.target.value = "";
         return;
     }
-    try {
-        const response = await fetch("/open", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                filename: file.name
-            })
-        });
-        const result = await response.json();
-        if (!result.success) {
-            alert(result.message);
-            event.target.value = "";
-            return;
-        }
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const code = e.target.result;
         const type =
             file.name.endsWith(".txt")
                 ? "text"
@@ -363,23 +350,41 @@ async function openFile(event) {
             type === "text"
                 ? "plaintext"
                 : "pseudocode";
-        const fileObj = {
-            name: file.name,
-            type: type,
-            saved: true,
-            modified: false,
-            readOnly: false,
-            model: monaco.editor.createModel(
-                result.code,
-                language
-            )
-        };
-        files.push(fileObj);
-        addTab(fileObj);
-        switchToFile(fileObj);
-    } catch (err) {
-        alert("Failed to open file.");
-    }
+        try {
+            const response = await fetch("/upload", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    filename: file.name,
+                    code: code
+                })
+            });
+            const result = await response.json();
+            if (!result.success) {
+                alert(result.message);
+                return;
+            }
+            const fileObj = {
+                name: file.name,
+                type: type,
+                saved: true,
+                modified: false,
+                model: monaco.editor.createModel(
+                    code,
+                    language
+                )
+            };
+            files.push(fileObj);
+            addTab(fileObj);
+            switchToFile(fileObj);
+        } catch (err) {
+            console.error(err);
+            alert("Failed to load file.");
+        }
+    };
+    reader.readAsText(file);
     event.target.value = "";
 }
 
